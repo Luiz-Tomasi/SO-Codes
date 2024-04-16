@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
+#include <conio.h>
 
 // Define constants
 #define ESTEIRA1_PESO 5        
@@ -30,6 +32,15 @@ DWORD WINAPI Esteira1_thread(LPVOID lpParam) {
         ReleaseMutex(esteira_mutex);
 
         Sleep(ESTEIRA1_INTERVALO); 
+    }
+}
+
+void aguardarTecla()
+{
+    // Aguarda até que uma tecla seja pressionada
+    if (_kbhit())
+    {
+        exit(0); // Encerra o programa
     }
 }
 
@@ -70,6 +81,9 @@ DWORD WINAPI display_thread(LPVOID lpParam) {
 
         printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
         Sleep(DISPLAY_INTERVAL); 
+
+        // Verifica se uma tecla foi pressionada
+        aguardarTecla();
     }
 }
 

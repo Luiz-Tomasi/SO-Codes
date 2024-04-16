@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <windows.h>
+#include <conio.h>
 
 // Define constantes
 #define PESO_ESTEIRA1 5
@@ -17,6 +19,15 @@ typedef struct
     int peso;
     int intervalo;
 } ArgumentosEsteira;
+
+void aguardarTecla()
+{
+    // Aguarda até que uma tecla seja pressionada
+    if (_kbhit())
+    {
+        exit(0); // Encerra o programa
+    }
+}
 
 // Escreve continuamente itens na esteira
 void funcao_esteira(ArgumentosEsteira *args)
@@ -48,6 +59,9 @@ void funcao_esteira(ArgumentosEsteira *args)
         }
 
         Sleep(args->intervalo);
+
+        // Verifica se uma tecla foi pressionada
+        aguardarTecla();
     }
 }
 
@@ -93,6 +107,9 @@ void funcao_exibicao(LPVOID lpParam)
         printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 
         Sleep(INTERVALO_EXIBICAO);
+
+        // Verifica se uma tecla foi pressionada
+        aguardarTecla();
     }
 }
 
