@@ -49,6 +49,7 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
     close(pipe_fd2[1]); // Fecha a extremidade de escrita do pipe da esteira 2
 
     int contagem_total = 0;
+    int ultimaContagemPeso = 0;
     int peso_total = 0;
     while (1) {
         int contagem1, peso1, contagem2, peso2;
@@ -57,9 +58,12 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
         read(pipe_fd2[0], &contagem2, sizeof(contagem2));
         read(pipe_fd2[0], &peso2, sizeof(peso2));
 
-
+        if((ultimaContagemPeso + 20) < (peso1 + peso2)){
+            peso_total = peso1 + peso2;
+            ultimaContagemPeso = ultimaContagemPeso + 500;
+        }
         contagem_total = contagem1 + contagem2;
-        peso_total = peso1 + peso2;
+        
 
         printf("Esteira 1: Itens = %d, Peso = %d\n", contagem1, peso1);
         printf("Esteira 2: Itens = %d, Peso = %d\n", contagem2, peso2);
