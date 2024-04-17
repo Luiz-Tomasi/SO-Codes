@@ -35,15 +35,6 @@ DWORD WINAPI Esteira1_thread(LPVOID lpParam) {
     }
 }
 
-void aguardarTecla()
-{
-    // Aguarda até que uma tecla seja pressionada
-    if (_kbhit())
-    {
-        exit(0); // Encerra o programa
-    }
-}
-
 // Função para simular a esteira 2
 DWORD WINAPI esteira2_thread(LPVOID lpParam) {
     while (1) {
@@ -62,6 +53,7 @@ DWORD WINAPI display_thread(LPVOID lpParam) {
     int last_total_count = 0; // Contagem total da última atualização
     int last_total_peso = 0; // Peso total da última atualização
     while (1) {
+        DWORD start = GetTickCount();
         WaitForSingleObject(esteira_mutex, INFINITE); // Bloqueia o mutex para acesso seguro às variáveis compartilhadas
         total_count = esteira1.count + esteira2.count;
         total_peso = esteira1.total_peso + esteira2.total_peso;
@@ -70,6 +62,8 @@ DWORD WINAPI display_thread(LPVOID lpParam) {
         // Verifica se é hora de atualizar o peso total e exibe uma mensagem de atualização
         if (total_count - last_total_count >= UPDATE_peso_INTERVAL) {
             printf("peso updated: %d\n", total_peso);
+            DWORD end = GetTickCount();
+            printf("Tempo de execucao: %d ms\n", end - start);
             last_total_count = total_count;
             last_total_peso = total_peso;
         }
@@ -83,7 +77,13 @@ DWORD WINAPI display_thread(LPVOID lpParam) {
         Sleep(DISPLAY_INTERVAL); 
 
         // Verifica se uma tecla foi pressionada
-        aguardarTecla();
+        if (_kbhit())
+        {
+            DWORD end = GetTickCount();
+            printf("Tempo de execucao: %d ms\n", end - start);
+            Sleep(3000); // Delay de 1 segundo
+            exit(0); // Encerra o programa
+        }
     }
 }
 
