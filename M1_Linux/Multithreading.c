@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <sys/select.h> // Para utilizar a função select()
+#include <time.h>       // Para obter o tempo atual
 
 // Define constantes
 #define PESO_ESTEIRA1 5
@@ -24,6 +25,8 @@ Esteira esteira1 = {PESO_ESTEIRA1, 0, 0};
 Esteira esteira2 = {PESO_ESTEIRA2, 0, 0};
 pthread_mutex_t mutex_esteira = PTHREAD_MUTEX_INITIALIZER; // Mutex para exclusão mútua
 int ultimaContagem = 0;
+time_t tempo_inicio = 0; // Variável para armazenar o tempo de início
+time_t tempo_pausa = 0; // Variável para armazenar o tempo de pausa
 
 // Função para bloquear o mutex
 void bloquear_mutex() {
@@ -58,7 +61,8 @@ void *thread_esteira1(void *arg) {
 
         // Verifica se há entrada de teclado
         if (kbhit()) {
-            printf("\nSistema pausado pelo usuário.\n");
+            tempo_pausa = time(NULL); // Registra o tempo de pausa
+            return NULL;
             break;
         }
     }
@@ -76,7 +80,8 @@ void *thread_esteira2(void *arg) {
 
         // Verifica se há entrada de teclado
         if (kbhit()) {
-            printf("\nSistema pausado pelo usuário.\n");
+            tempo_pausa = time(NULL); // Registra o tempo de pausa
+            return NULL;
             break;
         }
     }
@@ -108,7 +113,8 @@ void *thread_exibicao(void *arg) {
 
         // Verifica se há entrada de teclado
         if (kbhit()) {
-            printf("\nSistema pausado pelo usuário.\n");
+            tempo_pausa = time(NULL); // Registra o tempo de pausa
+            return NULL;
             break;
         }
     }
@@ -117,6 +123,10 @@ void *thread_exibicao(void *arg) {
 
 int main() {
     pthread_t tid_esteira1, tid_esteira2, tid_exibicao;
+
+    // Registra o tempo de início
+    tempo_inicio = time(NULL);
+    printf("Sistema iniciado às %s\n", asctime(localtime(&tempo_inicio)));
 
     // Cria threads para as esteiras e para exibir informações
     pthread_create(&tid_esteira1, NULL, thread_esteira1, NULL);
@@ -127,6 +137,12 @@ int main() {
     pthread_join(tid_esteira1, NULL);
     pthread_join(tid_esteira2, NULL);
     pthread_join(tid_exibicao, NULL);
+
+    // Calcula a duração total do sistema
+    time_t duracao_total = difftime(tempo_pausa, tempo_inicio);
+    printf("\nSistema encerrado. Tempo de início: %s", asctime(localtime(&tempo_inicio)));
+    printf("Tempo de pausa: %s", asctime(localtime(&tempo_pausa)));
+    printf("Duração total: %ld segundos\n", duracao_total);
 
     return 0;
 }
