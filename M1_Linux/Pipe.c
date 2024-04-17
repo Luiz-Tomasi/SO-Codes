@@ -59,11 +59,13 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
         read(pipe_fd2[0], &contagem2, sizeof(contagem2));
         read(pipe_fd2[0], &peso2, sizeof(peso2));
 
-        if((ultimaContagemPeso + INTERVALO_ATUALIZACAO_PESO) < (peso1 + peso2)){
+        contagem_total = contagem1 + contagem2;
+
+        if((ultimaContagemPeso + INTERVALO_ATUALIZACAO_PESO) <= contagem_total){
             peso_total = peso1 + peso2;
             ultimaContagemPeso = ultimaContagemPeso + INTERVALO_ATUALIZACAO_PESO;
         }
-        contagem_total = contagem1 + contagem2;
+        
         
 
         printf("Esteira 1: Itens = %d, Peso = %d\n", contagem1, peso1);
