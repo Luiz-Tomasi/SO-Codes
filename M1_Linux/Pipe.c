@@ -12,6 +12,18 @@
 #define INTERVALO_EXIBICAO 2             // Intervalo de tempo para atualização da exibição (em segundos)
 #define INTERVALO_ATUALIZACAO_PESO 500   // Intervalo de itens para atualizar o peso total
 
+// Função para verificar se há entrada de teclado
+int kbhit(void) {
+    struct timeval tv;
+    fd_set fds;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    FD_ZERO(&fds);
+    FD_SET(STDIN_FILENO, &fds); // STDIN_FILENO é o descritor de arquivo para entrada padrão (teclado)
+    select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+    return FD_ISSET(STDIN_FILENO, &fds);
+}
+
 // Função para simular a esteira 1
 void esteira1(int pipe_fd[]) {
     close(pipe_fd[0]); // Fecha a extremidade de leitura do pipe
@@ -45,7 +57,7 @@ void esteira2(int pipe_fd[]) {
 }
 
 // Função para exibir informações sobre as esteiras
-void exibicao(int pipe_fd1[], int pipe_fd2[]) {
+void exibicao(int pipe_fd1[], int pipe_fd2[], time_t tempo_inicio) {
     close(pipe_fd1[1]); // Fecha a extremidade de escrita do pipe da esteira 1
     close(pipe_fd2[1]); // Fecha a extremidade de escrita do pipe da esteira 2
 
@@ -65,8 +77,6 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
             peso_total = peso1 + peso2;
             ultimaContagemPeso = ultimaContagemPeso + INTERVALO_ATUALIZACAO_PESO;
         }
-        
-        
 
         printf("Esteira 1: Itens = %d, Peso = %d\n", contagem1, peso1);
         printf("Esteira 2: Itens = %d, Peso = %d\n", contagem2, peso2);
@@ -74,7 +84,19 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
         printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 
         sleep(INTERVALO_EXIBICAO); // Espera em segundos
+
+        // Verifica se há entrada de teclado
+        if (kbhit()) {
+            printf("Sistema pausado pelo usuário.\n");
+            break;
+        }
     }
+
+    // Registra o tempo de parada e calcula a duração total
+    time_t tempo_pausa = time(NULL);
+    printf("Tempo de início: %s", asctime(localtime(&tempo_inicio)));
+    printf("Tempo de parada: %s", asctime(localtime(&tempo_pausa)));
+    printf("Duração total: %ld segundos\n", tempo_pausa - tempo_inicio);
 }
 
 int main() {
@@ -101,7 +123,8 @@ int main() {
 
     pid_t pid_exibicao = fork();
     if (pid_exibicao == 0) {
-        exibicao(pipe_fd_esteira1, pipe_fd_esteira2);
+        time_t tempo_inicio = time(NULL); // Registra o tempo de início
+        exibicao(pipe_fd_esteira1, pipe_fd_esteira2, tempo_inicio);
         exit(EXIT_SUCCESS);
     }
 
