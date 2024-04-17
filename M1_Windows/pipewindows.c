@@ -82,6 +82,8 @@ void exibicao(void *arg)
             peso_total = peso1 + peso2;
             ultimaContagemPeso = ultimaContagemPeso + INTERVALO_ATUALIZACAO_PESO;
             printf("Peso atualizado: %d\n", peso_total);
+            DWORD end = GetTickCount();
+            printf("Tempo de execucao: %d ms\n", end - start);
         }
 
         printf("Esteira 1: Itens = %d, Peso = %d\n", contagem1, peso1);
@@ -90,6 +92,15 @@ void exibicao(void *arg)
         printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 
         Sleep(INTERVALO_EXIBICAO);
+
+        // Verifica se uma tecla foi pressionada
+        if (_kbhit())
+        {
+            DWORD end = GetTickCount();
+            printf("Tempo de execucao: %d ms\n", end - start);
+            Sleep(3000); // Delay de 3 segundos
+            exit(0); // Encerra o programa
+        }
     }
 }
 
