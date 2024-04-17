@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <time.h> // Para usar a função time()
 
 // Define constantes
 #define PESO_ESTEIRA1 5
@@ -19,11 +20,11 @@ void esteira1(int pipe_fd[]) {
     int peso_total = 0;
     while (1) {
         contagem++;
-        peso_total += PESO_ESTEIRA1;
+        peso_total = contagem * PESO_ESTEIRA1;
         write(pipe_fd[1], &contagem, sizeof(contagem));
         write(pipe_fd[1], &peso_total, sizeof(peso_total));
 
-        sleep(INTERVALO_ESTEIRA1);
+        usleep(INTERVALO_ESTEIRA1 * 1000000); // Espera em microssegundos
     }
 }
 
@@ -34,12 +35,12 @@ void esteira2(int pipe_fd[]) {
     int contagem = 0;
     int peso_total = 0;
     while (1) {
-        contagem++;
-        peso_total += PESO_ESTEIRA2;
+        contagem += 2;
+        peso_total = contagem * PESO_ESTEIRA2;
         write(pipe_fd[1], &contagem, sizeof(contagem));
         write(pipe_fd[1], &peso_total, sizeof(peso_total));
 
-        sleep(INTERVALO_ESTEIRA2);
+        usleep(INTERVALO_ESTEIRA2 * 1000000); // Espera em microssegundos
     }
 }
 
@@ -70,7 +71,7 @@ void exibicao(int pipe_fd1[], int pipe_fd2[]) {
         printf("Total: Itens = %d, Peso = %d\n", contagem_total, peso_total);
         printf("=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n");
 
-        sleep(INTERVALO_EXIBICAO);
+        sleep(INTERVALO_EXIBICAO); // Espera em segundos
     }
 }
 
