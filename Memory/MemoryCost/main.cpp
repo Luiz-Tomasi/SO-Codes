@@ -1,4 +1,4 @@
-#include "stdafx.h"
+//#include "stdafx.h"
 #include <chrono>
 #include <stdio.h>
 #include <string.h>
@@ -40,7 +40,7 @@ void FastMeasure()
     printf("Busy waiting to raise the CPU frequency...\n");
     // Busy wait for a second so that the CPUs ramp up to full speed.
     BusyWait(500);
-    const int bufSize = 32 * 1024 * 1024;
+    const int bufSize = 2 * 128 * 1024 * 1024;
     const int iterationCount = 100;
     {
         Timer timer;
