@@ -57,7 +57,8 @@ void *thread_esteira1(void *arg) {
         esteira1.peso_total += PESO_ESTEIRA1;
         desbloquear_mutex();
 
-        sleep(INTERVALO_ESTEIRA1);
+        // Simula algum trabalho ao invés de dormir
+        for (volatile int i = 0; i < 1000000; i++);
 
         // Verifica se há entrada de teclado
         if (kbhit()) {
@@ -76,7 +77,8 @@ void *thread_esteira2(void *arg) {
         esteira2.peso_total += PESO_ESTEIRA2;
         desbloquear_mutex();
 
-        sleep(INTERVALO_ESTEIRA2);
+        // Simula algum trabalho ao invés de dormir
+        for (volatile int i = 0; i < 1000000; i++);
 
         // Verifica se há entrada de teclado
         if (kbhit()) {
@@ -87,6 +89,7 @@ void *thread_esteira2(void *arg) {
     }
     return NULL;
 }
+
 
 // Função para exibir informações sobre as esteiras
 void *thread_exibicao(void *arg) {
