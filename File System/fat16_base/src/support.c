@@ -5,35 +5,32 @@
 
 /* Manipulate the path to lead com name, extensions and special characters */
 char* padding(char *filename){
-    char output[11];
+    char* output = malloc(12); // Allocate memory for the formatted name
+    if (!output) {
+        return NULL; // Return NULL if memory allocation fails
+    }
+
+    memset(output, ' ', 11); // Fill with spaces
+    output[11] = '\0'; // Null-terminate the string
+
     char* strptr = filename;
-    char* dot;
-    dot = strchr(filename, '.');
+    char* dot = strchr(filename, '.');
 
     int i;
-    for(i=0; strptr != dot; strptr++, i++){
-    	if(i==8)
-    		break;
-    	output[i] = *strptr;
+    for (i = 0; strptr != dot && *strptr != '\0'; strptr++, i++) {
+        if (i == 8) {
+            break;
+        }
+        output[i] = toupper(*strptr); // Convert to uppercase and copy
     }
 
-    int trail = 8 - i;
-    for(; trail > 0; trail--, i++){
-    	output[i] = ' ';
+    if (dot) {
+        strptr = dot + 1;
+        for (i = 8; i < 11 && *strptr != '\0'; strptr++, i++) {
+            output[i] = toupper(*strptr); // Convert to uppercase and copy
+        }
     }
 
-    strptr = dot;
-    strptr++;
-    for(i=8; i < 11; strptr++, i++){
-    	output[i] = *strptr;
-    }
-
-    output[11] = '\0';
-    for(i = 0; output[i] != '\0'; i++){
-    	output[i] = toupper(output[i]);
-    }
-    
-    char* out = output;
-    return out;
+    return output;
 
 }

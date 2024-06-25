@@ -95,56 +95,40 @@ int wipe(FILE *fp, struct fat_dir *dir, struct fat_bpb *bpb) {
 }
 
 void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) {
-    // Read source file
+     // Open the source file
     FILE *src_fp = fopen(src_filename, "rb");
+
     if (!src_fp) {
         fprintf(stderr, "Error opening source file %s\n", src_filename);
         return;
     }
 
+    // Get the source file size
     fseek(src_fp, 0, SEEK_END);
     long file_size = ftell(src_fp);
     rewind(src_fp);
+
+
+    // Allocate buffer to read the file
     char *buffer = malloc(file_size);
     if (!buffer) {
         fclose(src_fp);
         fprintf(stderr, "Memory allocation error\n");
         return;
     }
+
+    // Read the source file into buffer
     fread(buffer, 1, file_size, src_fp);
     fclose(src_fp);
 
-    // Load directory entries
+
+    // Load directory entries from the FAT16 image
     struct fat_dir *dirs = ls(fp, bpb);
     if (!dirs) {
         free(buffer);
         fprintf(stderr, "Error listing directories\n");
         return;
     }
-
-    // Find source directory entry
-    struct fat_dir *src_dir = find_pointer(dirs, src_filename, bpb);
-    if (!src_dir) {
-        free(buffer);
-        free(dirs);
-        fprintf(stderr, "Error finding source file %s\n", src_filename);
-        return;
-    }
-
-    // Prepare new directory entry
-    struct fat_dir new_dir = {0};
-    char *new_name = padding(dest_filename);
-    if (!new_name) {
-        free(buffer);
-        free(dirs);
-        fprintf(stderr, "Error allocating memory for new file name\n");
-        return;
-    }
-    strcpy((char *)new_dir.name, new_name);
-    free(new_name);
-    new_dir.attr = src_dir->attr;
-    new_dir.starting_cluster = src_dir->starting_cluster;
-    new_dir.file_size = file_size;
 
     // Find a free directory entry for the new file
     struct fat_dir *free_dir = NULL;
@@ -162,24 +146,38 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
         return;
     }
 
-    // Write new directory entry
-    *free_dir = new_dir;
+
+    // Prepare the new directory entry
+    memset(free_dir, 0, sizeof(struct fat_dir));
+    char *new_name = padding(dest_filename);
+    if (!new_name) {
+        free(buffer);
+        free(dirs);
+        fprintf(stderr, "Error allocating memory for new file name\n");
+        return;
+    }
+
+    printf("mv \n");
+    
+    strcpy((char *)free_dir->name, new_name);
+    free(new_name);
+    free_dir->attr = 0; // Set appropriate attributes
+    free_dir->starting_cluster = 2; // Set appropriate starting cluster (for simplicity, using cluster 2)
+    free_dir->file_size = file_size;
+
+    // Write the new directory entry to the FAT16 image
     fseek(fp, bpb_froot_addr(bpb) + (free_dir - dirs) * sizeof(struct fat_dir), SEEK_SET);
     fwrite(free_dir, 1, sizeof(struct fat_dir), fp);
 
-    // Write file data to the image
-    fseek(fp, bpb_froot_addr(bpb) + new_dir.starting_cluster * bpb->bytes_p_sect, SEEK_SET);
+    // Write file data to the FAT16 image
+    fseek(fp, bpb_fdata_addr(bpb) + (free_dir->starting_cluster - 2) * bpb->bytes_p_sect * bpb->sector_p_clust, SEEK_SET);
     fwrite(buffer, 1, file_size, fp);
-
-    // Mark old directory entry as free
-    src_dir->name[0] = 0xE5;  // Mark entry as deleted
-    fseek(fp, bpb_froot_addr(bpb) + (src_dir - dirs) * sizeof(struct fat_dir), SEEK_SET);
-    fwrite(src_dir, 1, sizeof(struct fat_dir), fp);
 
     // Clean up
     free(buffer);
     free(dirs);
 }
+
 
 
 void rm(FILE *fp, char *filename, struct fat_bpb *bpb) {
