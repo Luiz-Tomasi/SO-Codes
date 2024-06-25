@@ -49,7 +49,7 @@ int main(int argc, char **argv){
         }
 
         if (strcmp(command, "cp") == 0){
-            cp(fp, argv[2], &bpb);
+            cp(fp, argv[2], argv[3], &bpb);
             fclose(fp);
         }
 

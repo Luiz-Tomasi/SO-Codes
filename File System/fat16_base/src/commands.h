@@ -19,7 +19,7 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb);
 void rm(FILE *, char *, struct fat_bpb *);
 
 /* copy the file to the fat directory */
-void cp(FILE *fp, char *filename, struct fat_bpb *bpb);
+void cp(FILE *fp, char *filename, char *dest_filename, struct fat_bpb *bpb);
 
 /* helper function: find specific filename in fat_dir */
 struct fat_dir find(struct fat_dir *, char *, struct fat_bpb *);

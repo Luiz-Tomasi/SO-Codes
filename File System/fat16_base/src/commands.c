@@ -205,42 +205,54 @@ void rm(FILE *fp, char *filename, struct fat_bpb *bpb) {
     free(dirs);
 }
 
-void cp(FILE *fp, char *filename, struct fat_bpb *bpb) {
-    FILE *src_fp = fopen(filename, "rb");
-    if (!src_fp) {
-        fprintf(stderr, "Error opening source file %s\n", filename);
-        return;
-    }
-
-    fseek(src_fp, 0, SEEK_END);
-    long file_size = ftell(src_fp);
-    rewind(src_fp);
-    char *buffer = malloc(file_size);
-    if (!buffer) {
-        fclose(src_fp);
-        fprintf(stderr, "Memory allocation error\n");
-        return;
-    }
-    fread(buffer, 1, file_size, src_fp);
-    fclose(src_fp);
-
+void cp(FILE *fp, char *filename, char *dest_filename, struct fat_bpb *bpb) {
+    // Listar diretórios na FAT16
     struct fat_dir *dirs = ls(fp, bpb);
     if (!dirs) {
-        free(buffer);
-        fprintf(stderr, "Error listing directories\n");
+        fprintf(stderr, "Erro ao listar diretórios\n");
+        return;
+    }
+    
+    // Encontrar o arquivo de origem na FAT16
+    struct fat_dir *dir = find_pointer(dirs, filename, bpb);
+    if (!dir) {
+        fprintf(stderr, "Erro ao encontrar arquivo %s\n", filename);
+        free(dirs);
         return;
     }
 
-    struct fat_dir new_dir = {0};
-    strcpy((char *)new_dir.name, filename);
-    new_dir.attr = DIR_ATTR_ARCHIVE;
-    new_dir.starting_cluster = bpb->possible_rentries - 1; // Simple way to find the next free cluster
-    new_dir.file_size = file_size;
+    // Abrir arquivo de destino na máquina host
+    FILE *dest_fp = fopen(dest_filename, "wb");
+    if (!dest_fp) {
+        fprintf(stderr, "Erro ao abrir arquivo de destino %s\n", dest_filename);
+        free(dirs);
+        return;
+    }
 
-    fseek(fp, bpb_froot_addr(bpb) + new_dir.starting_cluster * sizeof(struct fat_dir), SEEK_SET);
-    fwrite(&new_dir, 1, sizeof(new_dir), fp);
-    fwrite(buffer, 1, file_size, fp);
+    // Calcular o offset inicial e o tamanho do arquivo
+    uint32_t start_offset = bpb_froot_addr(bpb) + (bpb->bytes_p_sect * dir->starting_cluster);
+    uint32_t file_size = dir->file_size;
 
+    // Alocar buffer para leitura dos dados
+    char *buffer = malloc(file_size);
+    if (!buffer) {
+        fclose(dest_fp);
+        fprintf(stderr, "Erro de alocação de memória\n");
+        free(dirs);
+        return;
+    }
+
+    // Ler os dados do arquivo da imagem FAT16 para o buffer
+    fseek(fp, start_offset, SEEK_SET);
+    fread(buffer, 1, file_size, fp);
+
+    // Escrever os dados do buffer no arquivo de destino
+    fwrite(buffer, 1, file_size, dest_fp);
+
+    // Limpar memória e fechar arquivos
     free(buffer);
+    fclose(dest_fp);
     free(dirs);
 }
+
+
