@@ -13,7 +13,7 @@ int write_dir (FILE *, char *, struct fat_dir *);
 int write_data(FILE *, char *, struct fat_dir *, struct fat_bpb *);
 
 /* move file from source to destination */
-void mv(FILE *, char *, struct fat_bpb *);
+void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb);
 
 /* delete the file from the fat directory */
 void rm(FILE *, char *, struct fat_bpb *);

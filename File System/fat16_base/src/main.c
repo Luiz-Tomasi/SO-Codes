@@ -54,13 +54,14 @@ int main(int argc, char **argv){
         }
 
         if (strcmp(command, "mv") == 0){
-            mv(fp, argv[2], &bpb);
+            mv(fp, argv[2], argv[3], &bpb);
             fclose(fp);
         }
         if (strcmp(command, "rm") == 0){
             rm(fp, argv[2], &bpb);
             fclose(fp);
         }
+
     }
 
     return 0;
