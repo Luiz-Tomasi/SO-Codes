@@ -26,14 +26,15 @@ struct fat_dir find(struct fat_dir *dirs, char *filename, struct fat_bpb *bpb) {
     return curdir;
 }
 
+//Encontra um ponteiro para uma entrada de diretório no array de diretórios fornecido com o nome especificado.
 struct fat_dir *find_pointer(struct fat_dir *dirs, char *filename, struct fat_bpb *bpb) {
     int i;
     for (i = 0; i < bpb->possible_rentries; i++) {
         if (strcmp((char *)dirs[i].name, filename) == 0) {
-            return &dirs[i]; // Return a pointer to the matching directory entry
+            return &dirs[i]; 
         }
     }
-    return NULL; // Return NULL if no matching directory entry is found
+    return NULL;
 }
 
 struct fat_dir *ls(FILE *fp, struct fat_bpb *bpb) {
@@ -95,7 +96,7 @@ int wipe(FILE *fp, struct fat_dir *dir, struct fat_bpb *bpb) {
 }
 
 void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) {
-     // Open the source file
+    // Abre o arquivo de origem
     FILE *src_fp = fopen(src_filename, "rb");
 
     if (!src_fp) {
@@ -103,13 +104,13 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
         return;
     }
 
-    // Get the source file size
+    // Obtém o tamanho do arquivo de origem
     fseek(src_fp, 0, SEEK_END);
     long file_size = ftell(src_fp);
     rewind(src_fp);
 
 
-    // Allocate buffer to read the file
+    // Aloca um buffer para ler o arquivo
     char *buffer = malloc(file_size);
     if (!buffer) {
         fclose(src_fp);
@@ -117,12 +118,12 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
         return;
     }
 
-    // Read the source file into buffer
+     // Lê o arquivo de origem para o buffer
     fread(buffer, 1, file_size, src_fp);
     fclose(src_fp);
 
 
-    // Load directory entries from the FAT16 image
+    // Carrega as entradas de diretório da imagem FAT16
     struct fat_dir *dirs = ls(fp, bpb);
     if (!dirs) {
         free(buffer);
@@ -130,7 +131,7 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
         return;
     }
 
-    // Find a free directory entry for the new file
+    // Encontra uma entrada de diretório livre para o novo arquivo
     struct fat_dir *free_dir = NULL;
     for (int i = 0; i < bpb->possible_rentries; i++) {
         if (dirs[i].name[0] == 0x00 || dirs[i].name[0] == 0xE5) {
@@ -147,7 +148,7 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
     }
 
 
-    // Prepare the new directory entry
+    // Prepara a nova entrada de diretório
     memset(free_dir, 0, sizeof(struct fat_dir));
     char *new_name = padding(dest_filename);
     if (!new_name) {
@@ -156,8 +157,6 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
         fprintf(stderr, "Error allocating memory for new file name\n");
         return;
     }
-
-    printf("mv \n");
     
     strcpy((char *)free_dir->name, new_name);
     free(new_name);
@@ -165,15 +164,15 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
     free_dir->starting_cluster = 2; // Set appropriate starting cluster (for simplicity, using cluster 2)
     free_dir->file_size = file_size;
 
-    // Write the new directory entry to the FAT16 image
+    // Escreve a nova entrada de diretório na imagem FAT16
     fseek(fp, bpb_froot_addr(bpb) + (free_dir - dirs) * sizeof(struct fat_dir), SEEK_SET);
     fwrite(free_dir, 1, sizeof(struct fat_dir), fp);
 
-    // Write file data to the FAT16 image
+    // Escreve os dados do arquivo na imagem FAT16
     fseek(fp, bpb_fdata_addr(bpb) + (free_dir->starting_cluster - 2) * bpb->bytes_p_sect * bpb->sector_p_clust, SEEK_SET);
     fwrite(buffer, 1, file_size, fp);
 
-    // Clean up
+    // Limpeza
     free(buffer);
     free(dirs);
 }
@@ -181,25 +180,34 @@ void mv(FILE *fp, char *src_filename, char *dest_filename, struct fat_bpb *bpb) 
 
 
 void rm(FILE *fp, char *filename, struct fat_bpb *bpb) {
+    // Carrega as entradas de diretório da imagem FAT16
     struct fat_dir *dirs = ls(fp, bpb);
     if (!dirs) {
         fprintf(stderr, "Error listing directories\n");
         return;
     }
+
+    // Encontra o ponteiro para a entrada de diretório correspondente ao arquivo especificado
     struct fat_dir *dir = find_pointer(dirs, filename, bpb);
     if (!dir) {
         fprintf(stderr, "Error finding file %s\n", filename);
         free(dirs);
         return;
     }
+
+    // Limpa o conteúdo do arquivo na imagem FAT16
     if (wipe(fp, dir, bpb) != 0) {
         fprintf(stderr, "Error wiping file %s\n", filename);
         free(dirs);
         return;
     }
+
+    // Marca a entrada de diretório como livre
     dir->attr = DIR_FREE_ENTRY;
     fseek(fp, bpb_froot_addr(bpb) + (dir - dirs) * sizeof(struct fat_dir), SEEK_SET);
     fwrite(dir, 1, sizeof(*dir), fp);
+
+    // Libera a memória alocada para as entradas de diretório
     free(dirs);
 }
 
