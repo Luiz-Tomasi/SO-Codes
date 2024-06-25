@@ -229,30 +229,29 @@ void cp(FILE *fp, char *filename, char *dest_filename, struct fat_bpb *bpb) {
         return;
     }
 
-    // Calcular o offset inicial e o tamanho do arquivo
-    uint32_t start_offset = bpb_froot_addr(bpb) + (bpb->bytes_p_sect * dir->starting_cluster);
+    uint32_t inicial_data_location = bpb_fdata_addr(bpb) + (dir->starting_cluster - 2) * bpb->bytes_p_sect * bpb->sector_p_clust;
     uint32_t file_size = dir->file_size;
+    
 
-    // Alocar buffer para leitura dos dados
-    char *buffer = malloc(file_size);
-    if (!buffer) {
-        fclose(dest_fp);
-        fprintf(stderr, "Erro de alocação de memória\n");
-        free(dirs);
-        return;
+    // Posicionar o ponteiro do arquivo no início dos dados do arquivo
+    fseek(fp, inicial_data_location, SEEK_SET);
+
+    // Buffer para leitura/escrita
+    uint8_t buffer[1024]; 
+
+    // Ler e escrever dados em blocos até o arquivo ser completamente copiado
+    uint32_t counter = file_size;
+    while (counter > 0) {
+        size_t size = (counter > sizeof(buffer)) ? sizeof(buffer) : counter;
+        fread(buffer, 1, size, fp);
+        fwrite(buffer, 1, size, dest_fp);
+        counter -= size;
     }
 
-    // Ler os dados do arquivo da imagem FAT16 para o buffer
-    fseek(fp, start_offset, SEEK_SET);
-    fread(buffer, 1, file_size, fp);
-
-    // Escrever os dados do buffer no arquivo de destino
-    fwrite(buffer, 1, file_size, dest_fp);
-
-    // Limpar memória e fechar arquivos
-    free(buffer);
+    // Fechar arquivos e liberar memória alocada
     fclose(dest_fp);
     free(dirs);
 }
+
 
 

@@ -1,6 +1,7 @@
 #include "support.h"
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 /* Manipulate the path to lead com name, extensions and special characters */
 char* padding(char *filename){
